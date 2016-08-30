@@ -1,0 +1,57 @@
+<project name="ridtracker" basedir=".">
+	<description>
+		scan loan iq for rids
+	</description>
+	
+	<!-- set global properties for this bin -->
+	
+	<property name="log4j.dir"     value="C:\Collections\commons-collections-3.2"/>
+	<property name="oracle.dir"     value="C:\oracle\driver"/>
+	<property name="lib.dir"     value="${log4j.dir};${oracle.dir}"/>
+	<property name="src" location="src"/>
+	<property name="bin" location="bin"/>
+	<property name="dist"  location="dist"/>
+	
+	<property name="src.dir"     value="src"/>
+    <property name="bin.dir"   value="bin"/>
+    <property name="classes.dir" value="${bin.dir}"/>
+    <property name="jar.dir"     value="${dist}"/>
+    <property name="main-class"  value="ridtracker"/>
+
+	
+    <path id="classpath">
+    	<fileset dir="${oracle.dir}" includes="**/*.jar"/>
+        <fileset dir="${log4j.dir}" includes="**/*.jar"/>	
+    </path>
+	
+	<target name="compile" depends="clean">
+	        <mkdir dir="${classes.dir}"/>
+	        <javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="classpath" />
+	</target>
+
+	<target name="jar" depends="compile">
+		<mkdir dir="${jar.dir}"/>
+		<jar destfile="${jar.dir}/${ant.project.name}.jar" basedir="${classes.dir}">
+		    <manifest>
+			<attribute name="Main-Class" value="${main-class}"/>
+		    </manifest>
+		</jar>
+	</target>
+
+
+	<target name="clean"
+		description="clean up" >
+		<!-- Delete the ${bin} and ${dist} directory trees -->
+		<delete dir="${bin}"/>
+		<delete dir="${dist}"/>
+	</target>
+  
+	<target name="run" depends="jar">
+	  <java fork="true" classname="${main-class}">
+	      <classpath>
+		  <path refid="classpath"/>
+		  <path location="${jar.dir}/${ant.project.name}.jar"/>
+	      </classpath>
+	  </java>
+	</target>
+</project>
