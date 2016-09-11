@@ -2,26 +2,31 @@ package loaniq.analysis;
 /**
  * @author lodonnell
  */
-import java.sql.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Vector;
 
-import org.apache.commons.collections.MultiMap;
-import org.apache.commons.collections.map.MultiValueMap;
+import org.apache.commons.collections4.MultiValuedMap;
+import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 
 public class ridanalyzer {
+	
 
 	private Vector<String> tables = null;
-	private MultiMap columns=null;
+	private MultiValuedMap columns=null;
 	private Vector<String> sql = null;
-	
+	MultiValuedMap<String, String> map = new ArrayListValuedHashMap<String, String>();
 	/**
 	 * 
 	 */
 	public ridanalyzer() {
 		tables = new Vector<String>();
-		columns = new MultiValueMap();
+		columns = new ArrayListValuedHashMap<String,String>();
 		sql = new Vector<String>();
 		populate_tables();
 		populate_columns();
