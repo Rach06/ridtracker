@@ -2,7 +2,7 @@ package loaniq.utils;
 
 import java.lang.reflect.Field;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import com.google.inject.TypeLiteral;
 import com.google.inject.spi.TypeEncounter;

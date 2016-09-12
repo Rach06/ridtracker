@@ -2,7 +2,9 @@ package loaniq.utils;
 
 import java.lang.reflect.Field;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+
 
 import com.google.inject.MembersInjector;
 
@@ -12,7 +14,7 @@ public class Log4JMembersInjector<T> implements MembersInjector<T> {
 
     Log4JMembersInjector(Field field) {
       this.field = field;
-      this.logger = Logger.getLogger(field.getDeclaringClass());
+      this.logger = LogManager.getLogger(field.getDeclaringClass());
       field.setAccessible(true);
     }
 
