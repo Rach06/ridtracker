@@ -29,8 +29,6 @@ public class ridtracker {
 		ridtracker app = injector.getInstance(ridtracker.class);
 		Params params = injector.getInstance( Params.class );
 		IAnalyzer ra = injector.getInstance( ridanalyzer.class );
-		//Params paraa.pms = Params.getParams();
-		//ra.prepareAnalyzer();
 		app.run(args, params, ra);
 
 	}
