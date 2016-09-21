@@ -5,17 +5,22 @@ package loaniq.analysis;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Vector;
 
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
+import org.apache.logging.log4j.Logger;
 
-public class ridanalyzer {
+import com.google.inject.Inject;
+
+import loaniq.utils.InjectLogger;
+
+public class ridanalyzer implements IAnalyzer {
 	
+	@InjectLogger Logger log;
+	
+	@Inject	Params param;
 
 	private Vector<String> tables = null;
 	private MultiValuedMap columns=null;
@@ -28,19 +33,26 @@ public class ridanalyzer {
 		tables = new Vector<String>();
 		columns = new ArrayListValuedHashMap<String,String>();
 		sql = new Vector<String>();
+	}
+	
+	public void prepareAnalyzer(){
 		populate_tables();
 		populate_columns();
 	}
 	
-	/**
-	 * brute force scan of the database tables for the rid
-	 * there are time implications to running this
+	public void logTest(){
+		log.debug("ridanalyser test");
+	}
+	
+	/* (non-Javadoc)
+	 * @see loaniq.analysis.IAnalyzer#analyze(java.lang.String)
 	 */
+	@Override
 	public void analyze(String rid){
 		if (rid.compareTo("")==0){
 			return;
 		}
-		Params param = Params.getParams();
+
 		print_tables();
 		String table;
 		String colname;
@@ -51,17 +63,17 @@ public class ridanalyzer {
 		while (tab_itr.hasNext()){
 			table = (String)tab_itr.next();
 			/*if ("VLS_GL_ENTRY".compareTo(table)==0){
-				param.log("2Found "+table);
+				log.debug("2Found "+table);
 			}*/
 			str_sql = "SELECT ";
 			//get the associated cols
-			//param.log("columns.get("+table+")");
+			//log.debug("columns.get("+table+")");
 			ArrayList<String> alcol = (ArrayList<String>) (columns.get(table));
 			if (alcol == null){
-				//param.log("Skipping table "+table+" :no cols found");
+				//log.debug("Skipping table "+table+" :no cols found");
 				continue;
 			}
-			//param.log("table-->"+alcol.toString());
+			//log.debug("table-->"+alcol.toString());
 			Iterator<String> col_itr = alcol.iterator();
 			while (col_itr != null && col_itr.hasNext()){
 				colname = (String)col_itr.next();
@@ -72,7 +84,7 @@ public class ridanalyzer {
 				str_sql += colname;
 			}
 			str_sql += " FROM "+table;
-			param.log(str_sql);
+			log.debug(str_sql);
 
 			try {
 				ResultSet rs = param.db_conn.stmt.executeQuery(str_sql);
@@ -83,25 +95,25 @@ public class ridanalyzer {
 						String dbrid = rs.getString(colname);
 						if (dbrid != null){
 							if (rid.compareTo(dbrid)==0){
-								param.log("Rid "+rid+" exists in "+table+"."+colname);
+								log.debug("Rid "+rid+" exists in "+table+"."+colname);
 							}
 						}
 					}
 				}
 			}
 			catch (SQLException ex){
-				param.log(str_sql);
-				param.log(ex.getMessage());
+				log.debug(str_sql);
+				log.debug(ex.getMessage());
 			}
 			not_first_pass=false;
 		}
 	}
 	
 	
-	/**
-	 * Function builds sql to scan a database for a rid
-	 * @param rid
+	/* (non-Javadoc)
+	 * @see loaniq.analysis.IAnalyzer#build_sql()
 	 */
+	@Override
 	public void build_sql(){
 		//Params param = Params.getParams();
 		String table;
@@ -115,9 +127,9 @@ public class ridanalyzer {
 			table = (String)tab_itr.next();
 			str_sql = "SELECT ";
 			//get the associated cols
-			//param.log("columns.get("+table+")");
+			//log.debug("columns.get("+table+")");
 			ArrayList<String> alcol = (ArrayList<String>) (columns.get(table));
-			//param.log("table-->"+alcol.toString());
+			//log.debug("table-->"+alcol.toString());
 			Iterator<String> col_itr = alcol.iterator();
 			while (col_itr.hasNext()){
 				colname = (String)col_itr.next();
@@ -128,7 +140,7 @@ public class ridanalyzer {
 				str_sql += colname;
 			}
 			str_sql += " FROM "+table;
-			//param.log(str_sql);
+			//log.debug(str_sql);
 			sql.add(str_sql);
 			not_first_pass=false;
 		}
@@ -139,7 +151,7 @@ public class ridanalyzer {
 	 * @return
 	 */
 	protected int entity_count(){
-		Params param = Params.getParams();
+		//Params param = Params.getParams();
 		String count = null;;
 		String sql = new String("select count(VIEW_NAME) as cnt " +
 				"from all_views where owner = 'LS2USER'");
@@ -151,13 +163,13 @@ public class ridanalyzer {
 		return (new Integer(count)).intValue();
 		}
 		catch (SQLException e){
-			param.log(e.getMessage());
+			log.debug(e.getMessage());
 			return 0;
 		}
 	}
 	
 	protected int col_count(){
-		Params param = Params.getParams();
+		//Params param = Params.getParams();
 		String count = null;
 		String sql = new String("select count(COLUMN_NAME) as cnt " +
 				"from ALL_TAB_COLUMNS where OWNER='LS2USER'");
@@ -169,7 +181,7 @@ public class ridanalyzer {
 		return (new Integer(count)).intValue();
 		}
 		catch (SQLException e){
-			param.log(e.getMessage());
+			log.debug(e.getMessage());
 			return 0;
 		}		
 	}
@@ -183,8 +195,8 @@ public class ridanalyzer {
 	 * populate columns
 	 */
 	private void populate_columns(){
-		Params param = Params.getParams();
-		param.log("Populate_columns()");
+		//Params param = Params.getParams();
+		log.debug("Populate_columns()");
 		String name = null;
 		/*String sql = new String("select TABLE_NAME,COLUMN_NAME from ALL_TAB_COLUMNS " +
 				"where OWNER='LS2USER' and TABLE_NAME='TLS_DEAL'");*///debug 1 table
@@ -202,23 +214,20 @@ public class ridanalyzer {
 				
 				if (name.contains("ID_")||name.contains("ID_")){
 					//if (name.compareTo("GLE_PID_DEAL")==0){
-						//param.log("Found GLE_ENTRY "+name);
-					//	param.log("columns.put("+rs.getString("TABLE_NAME")+","+name+")");
+						//log.debug("Found GLE_ENTRY "+name);
+					//	log.debug("columns.put("+rs.getString("TABLE_NAME")+","+name+")");
 					//}
 					
 					columns.put(rs.getString("TABLE_NAME").trim(), name);
 				}
 			}
-			//param.log("columns.size()="+columns.values().size());
+			//log.debug("columns.size()="+columns.values().size());
 		}
 		catch (SQLException e){
-			param.log(e.getMessage());
+			log.debug(e.getMessage());
 		}
 	}
 	
-	/**
-	 * function populates an array of tables to scan
-	 */
 	public void populate_tables(){
 		//tables = new String[entity_count];
 		/*
@@ -230,14 +239,14 @@ public class ridanalyzer {
 		 * 
 		 * 
 		 */
-		Params param = Params.getParams();
-		param.log("populate_table()");
+		//Params param = Params.getParams();
+		log.debug("populate_table()");
 		String name = null;
 		String sql = new String("select VIEW_NAME from all_views where OWNER = '"+
 				param.get_schema()+"'" 
 				//+" and view_name IN ('VLS_DEAL','VLS_FACILITY')"
 				);
-		param.log(sql);
+		log.debug(sql);
 		try {
 		ResultSet rs = param.db_conn.stmt.executeQuery(sql);
 			while (rs.next()){
@@ -246,8 +255,8 @@ public class ridanalyzer {
 			}
 		}
 		catch (SQLException e){
-			param.log(sql);
-			param.log(e.getMessage());
+			log.debug(sql);
+			log.debug(e.getMessage());
 		}		
 	}
 	
@@ -255,23 +264,23 @@ public class ridanalyzer {
 	 * debug function print all views
 	 */
 	public void print_tables(){
-		Params param = Params.getParams();
+		//IParameters param = Params.getParams();
 		Iterator<String> itr = tables.iterator();
-			param.log("All_Views:");
+			log.debug("All_Views:");
 			while (itr.hasNext()){
-				param.log(itr.next());
+				log.debug(itr.next());
 			}
-			param.log(tables.size()+" Tables in system");
+			log.debug(tables.size()+" Tables in system");
 	}
 	
 	public void print_cols(){
-		Params param = Params.getParams();
+		//IParameters param = Params.getParams();
 		Iterator<String> itr = columns.values().iterator();
-		param.log("All_Columns:");
+		log.debug("All_Columns:");
 		while(itr.hasNext()){
-			param.log(itr.next());
+			log.debug(itr.next());
 		}
-		param.log("Detected "+columns.values().size()+" Columns in system");
+		log.debug("Detected "+columns.values().size()+" Columns in system");
 	}
 	
 	public void print_views(){
@@ -280,13 +289,18 @@ public class ridanalyzer {
 	}
 	
 	public void print_sql(){
-		Params param = Params.getParams();
+		//IParameters param = Params.getParams();
 		Iterator<String> itr = sql.iterator();
-		param.log("All_SQL:");
+		log.debug("All_SQL:");
 		while(itr.hasNext()){
-			param.log(itr.next());
+			log.debug(itr.next());
 		}
-		param.log("There are "+sql.size()+" queries to scan for a rid");		
+		log.debug("There are "+sql.size()+" queries to scan for a rid");		
+	}
+
+	public void doSomething() {
+		// TODO Auto-generated method stub
+		columns = new ArrayListValuedHashMap<String,String>();
 	}
 
 }

@@ -1,8 +1,11 @@
 package loaniq.analysis;
 
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.Date;
+import org.apache.logging.log4j.Logger;
+
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+
+import loaniq.utils.InjectLogger;
 
 /**
  * 
@@ -10,50 +13,23 @@ import java.util.Date;
  * Singleton class to manage globals
  *
  */
+@Singleton
 public class Params {
-
-	private Params() {
-		db_conn = new DBConn();
-		try {
-			logfile = new FileWriter("c:\\temp\\ridtracker\\ridtracker.log");
-		}
-		catch (IOException e){
-			System.out.println(e.getMessage());
-		}
-	}
+	@InjectLogger Logger log;
 	
-	private FileWriter logfile = null;
+
+	@Inject 
+	public Params(){
+		
+	}
+
 	public String schema = null;
 	
 	protected static Params _the_params;
 	
 	
-	public static synchronized Params getParams(){
-		if (_the_params == null){
-			Params._the_params = new Params();
-		}
-		return _the_params;
-	}
-	
-	public DBConn db_conn;
-	
-	public void log(String msg){
-		//TODO write to file
-		System.out.println(msg);
-		
-		try {
-			final Date now = new Date();
-			logfile.write(now.toString()+" "+msg+'\n');
-			logfile.flush();
-		}
-		catch(IOException e){
-			System.out.println("Error "+e.getMessage());
-		}
-		catch(NullPointerException e){
-			System.out.println("Error writing to file "+e.getMessage());
-		}
+	public DBConn db_conn;//TODO: refactor to Connection
 
-	}
 	
 	public void set_schema(String schema){
 		this.schema = schema;
