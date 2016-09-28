@@ -13,10 +13,13 @@ import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.apache.logging.log4j.Logger;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import loaniq.utils.InjectLogger;
 
 public class ridanalyzer implements IAnalyzer {
+	
+	private final Provider<DBConnect> db_connProvider;
 	
 	@InjectLogger Logger log;
 	
@@ -29,13 +32,17 @@ public class ridanalyzer implements IAnalyzer {
 	/**
 	 * 
 	 */
-	public ridanalyzer() {
+	@Inject
+	public ridanalyzer(Provider<DBConnect> dbConnection) {
+		this.db_connProvider = dbConnection;
 		tables = new Vector<String>();
 		columns = new ArrayListValuedHashMap<String,String>();
 		sql = new Vector<String>();
 	}
-	
+
 	public void prepareAnalyzer(){
+		//param.db_conn = new PostgresSQLConn(); //test only refactor to DI.
+		param.db_conn = db_connProvider.get();
 		populate_tables();
 		populate_columns();
 	}
@@ -53,6 +60,11 @@ public class ridanalyzer implements IAnalyzer {
 			return;
 		}
 
+		if (param.db_conn == null){
+			log.error("Sorry. The db connection is null. I cant analyse the database");
+			return;
+		}
+		
 		print_tables();
 		String table;
 		String colname;
@@ -62,9 +74,6 @@ public class ridanalyzer implements IAnalyzer {
 
 		while (tab_itr.hasNext()){
 			table = (String)tab_itr.next();
-			/*if ("VLS_GL_ENTRY".compareTo(table)==0){
-				log.debug("2Found "+table);
-			}*/
 			str_sql = "SELECT ";
 			//get the associated cols
 			//log.debug("columns.get("+table+")");
@@ -87,7 +96,7 @@ public class ridanalyzer implements IAnalyzer {
 			log.debug(str_sql);
 
 			try {
-				ResultSet rs = param.db_conn.stmt.executeQuery(str_sql);
+				ResultSet rs = param.db_conn.getStatement().executeQuery(str_sql);
 				while (rs.next()){
 					col_itr = alcol.iterator();
 					while (col_itr.hasNext()){
@@ -102,8 +111,8 @@ public class ridanalyzer implements IAnalyzer {
 				}
 			}
 			catch (SQLException ex){
-				log.debug(str_sql);
-				log.debug(ex.getMessage());
+				log.error(str_sql);
+				log.error(ex.getMessage());
 			}
 			not_first_pass=false;
 		}
@@ -156,14 +165,14 @@ public class ridanalyzer implements IAnalyzer {
 		String sql = new String("select count(VIEW_NAME) as cnt " +
 				"from all_views where owner = 'LS2USER'");
 		try {
-		ResultSet rs = param.db_conn.stmt.executeQuery(sql);
+		ResultSet rs = param.db_conn.getStatement().executeQuery(sql);
 		while (rs.next()){
 			count = rs.getString("cnt");
 		}
 		return (new Integer(count)).intValue();
 		}
 		catch (SQLException e){
-			log.debug(e.getMessage());
+			log.error(e.getMessage());
 			return 0;
 		}
 	}
@@ -174,14 +183,14 @@ public class ridanalyzer implements IAnalyzer {
 		String sql = new String("select count(COLUMN_NAME) as cnt " +
 				"from ALL_TAB_COLUMNS where OWNER='LS2USER'");
 		try {
-		ResultSet rs = param.db_conn.stmt.executeQuery(sql);
+		ResultSet rs = param.db_conn.getStatement().executeQuery(sql);
 		while (rs.next()){
 			count = rs.getString("cnt");
 		}
 		return (new Integer(count)).intValue();
 		}
 		catch (SQLException e){
-			log.debug(e.getMessage());
+			log.error(e.getMessage());
 			return 0;
 		}		
 	}
@@ -208,7 +217,7 @@ public class ridanalyzer implements IAnalyzer {
 				);
 		
 		try {
-		ResultSet rs = param.db_conn.stmt.executeQuery(sql);
+		ResultSet rs = param.db_conn.getStatement().executeQuery(sql);
 			while (rs.next()){
 				name = rs.getString("COLUMN_NAME");
 				
@@ -224,7 +233,7 @@ public class ridanalyzer implements IAnalyzer {
 			//log.debug("columns.size()="+columns.values().size());
 		}
 		catch (SQLException e){
-			log.debug(e.getMessage());
+			log.error(e.getMessage());
 		}
 	}
 	
@@ -248,15 +257,15 @@ public class ridanalyzer implements IAnalyzer {
 				);
 		log.debug(sql);
 		try {
-		ResultSet rs = param.db_conn.stmt.executeQuery(sql);
+		ResultSet rs = param.db_conn.getStatement().executeQuery(sql);
 			while (rs.next()){
 				name = rs.getString("VIEW_NAME");
 				tables.add(name);
 			}
 		}
 		catch (SQLException e){
-			log.debug(sql);
-			log.debug(e.getMessage());
+			log.error(sql);
+			log.error(e.getMessage());
 		}		
 	}
 	
@@ -296,11 +305,6 @@ public class ridanalyzer implements IAnalyzer {
 			log.debug(itr.next());
 		}
 		log.debug("There are "+sql.size()+" queries to scan for a rid");		
-	}
-
-	public void doSomething() {
-		// TODO Auto-generated method stub
-		columns = new ArrayListValuedHashMap<String,String>();
 	}
 
 }

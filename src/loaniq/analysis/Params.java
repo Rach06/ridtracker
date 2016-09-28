@@ -25,10 +25,8 @@ public class Params {
 
 	public String schema = null;
 	
-	protected static Params _the_params;
 	
-	
-	public DBConn db_conn;//TODO: refactor to Connection
+	public DBConnect db_conn;
 
 	
 	public void set_schema(String schema){

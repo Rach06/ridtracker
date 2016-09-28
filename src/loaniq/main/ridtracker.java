@@ -1,10 +1,11 @@
+package loaniq.main;
+
 import java.time.Duration;
 import java.time.LocalDateTime;
 
 import org.apache.logging.log4j.Logger;
 
 import com.google.inject.Guice;
-import com.google.inject.Inject;
 import com.google.inject.Injector;
 
 import loaniq.analysis.IAnalyzer;
@@ -44,12 +45,14 @@ public class ridtracker {
 		else {
 			String rid = args[0];
 			params.set_schema(args[1]);
-			//TODO: Jodatime
-			LocalDateTime startPoint = LocalDateTime.now();   // The current date and time			
+
+			LocalDateTime startPoint = LocalDateTime.now();   // The current date and time	
+			
             ra.prepareAnalyzer();
 			ra.analyze(rid);//API_01
 			
 			LocalDateTime endPoint = LocalDateTime.now();     // The current date and time
+
 			Duration timeToExecute = Duration.between(endPoint, startPoint);
 			log.info("Execution took "+timeToExecute.getSeconds()+ " seconds");
 			log.info("finished...");
