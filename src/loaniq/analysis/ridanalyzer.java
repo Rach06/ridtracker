@@ -251,15 +251,15 @@ public class ridanalyzer implements IAnalyzer {
 		//Params param = Params.getParams();
 		log.debug("populate_table()");
 		String name = null;
-		String sql = new String("select VIEW_NAME from all_views where OWNER = '"+
-				param.get_schema()+"'" 
-				//+" and view_name IN ('VLS_DEAL','VLS_FACILITY')"
+		String sql = new String(
+				/*"select VIEW_NAME from all_views where OWNER = '"+param.get_schema()+"'" */
+				"select table_name from INFORMATION_SCHEMA.views where table_catalog = '"+param.get_schema()+"'" 
 				);
 		log.debug(sql);
 		try {
 		ResultSet rs = param.db_conn.getStatement().executeQuery(sql);
 			while (rs.next()){
-				name = rs.getString("VIEW_NAME");
+				name = rs.getString("table_name");
 				tables.add(name);
 			}
 		}
