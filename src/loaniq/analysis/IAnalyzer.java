@@ -1,6 +1,9 @@
 package loaniq.analysis;
 
+import java.util.Vector;
+
 public interface IAnalyzer {
+
 
 	/**
 	 * brute force scan of the database tables for the rid
@@ -12,7 +15,7 @@ public interface IAnalyzer {
 	 * Function builds sql to scan a database for a rid
 	 * @param rid
 	 */
-	void build_sql();
+	Vector<String> build_sql();
 
 	
 	public void prepareAnalyzer();

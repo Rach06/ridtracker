@@ -9,6 +9,7 @@ import loaniq.analysis.DBConnect;
 import loaniq.analysis.IAnalyzer;
 import loaniq.analysis.PostgresSQLConn;
 import loaniq.analysis.ridanalyzer;
+import loaniq.analysis.dummy.RidAnalyzerDummy;
 
 
 public class RidTrackerModule extends AbstractModule  {
@@ -17,7 +18,8 @@ public class RidTrackerModule extends AbstractModule  {
 	protected void configure() {
 		// TODO Auto-generated method stub
 		bindListener(Matchers.any(), new Log4JTypeListener());
-		bind(IAnalyzer.class).to(ridanalyzer.class);
+		//bind(IAnalyzer.class).to(ridanalyzer.class);
+		bind(IAnalyzer.class).to(RidAnalyzerDummy.class);
 	}
 	
 	@Provides

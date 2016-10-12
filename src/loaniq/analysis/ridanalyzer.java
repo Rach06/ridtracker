@@ -5,6 +5,7 @@ package loaniq.analysis;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Vector;
 
@@ -25,9 +26,9 @@ public class ridanalyzer implements IAnalyzer {
 	
 	@Inject	Params param;
 
-	private Vector<String> tables = null;
-	private MultiValuedMap columns=null;
-	private Vector<String> sql = null;
+	protected Vector<String> tables = null;
+	protected MultiValuedMap columns=null;
+	protected Vector<String> sql = null;
 	MultiValuedMap<String, String> map = new ArrayListValuedHashMap<String, String>();
 	/**
 	 * 
@@ -59,11 +60,8 @@ public class ridanalyzer implements IAnalyzer {
 		if (rid.compareTo("")==0){
 			return;
 		}
-
-		if (param.db_conn == null){
-			log.error("Sorry. The db connection is null. I cant analyse the database");
-			return;
-		}
+		
+		build_sql();
 		
 		print_tables();
 		String table;
@@ -72,58 +70,57 @@ public class ridanalyzer implements IAnalyzer {
 		String str_sql = new String("");
 		boolean not_first_pass=false;
 
-		while (tab_itr.hasNext()){
-			table = (String)tab_itr.next();
+		while (tab_itr.hasNext()) {
+			table = (String) tab_itr.next();
 			str_sql = "SELECT ";
-			//get the associated cols
-			//log.debug("columns.get("+table+")");
-			ArrayList<String> alcol = (ArrayList<String>) (columns.get(table));
-			if (alcol == null){
-				//log.debug("Skipping table "+table+" :no cols found");
+			// get the associated cols
+			// log.debug("columns.get("+table+")");
+			Collection<String> alcol = columns.get(table);
+			if (alcol == null) {
+				// log.debug("Skipping table "+table+" :no cols found");
 				continue;
 			}
-			//log.debug("table-->"+alcol.toString());
+			// log.debug("table-->"+alcol.toString());
 			Iterator<String> col_itr = alcol.iterator();
-			while (col_itr != null && col_itr.hasNext()){
-				colname = (String)col_itr.next();
-				if (not_first_pass){
-					str_sql+=",";
+			while (col_itr != null && col_itr.hasNext()) {
+				colname = (String) col_itr.next();
+				if (not_first_pass) {
+					str_sql += ",";
 				}
-				not_first_pass=true;
+				not_first_pass = true;
 				str_sql += colname;
 			}
-			str_sql += " FROM "+table;
+			str_sql += " FROM " + table;
 			log.debug(str_sql);
-
 			try {
 				ResultSet rs = param.db_conn.getStatement().executeQuery(str_sql);
-				while (rs.next()){
+				while (rs.next()) {
 					col_itr = alcol.iterator();
-					while (col_itr.hasNext()){
-						colname = (String)col_itr.next();
+					while (col_itr.hasNext()) {
+						colname = (String) col_itr.next();
 						String dbrid = rs.getString(colname);
-						if (dbrid != null){
-							if (rid.compareTo(dbrid)==0){
-								log.debug("Rid "+rid+" exists in "+table+"."+colname);
+						if (dbrid != null) {
+							if (rid.compareTo(dbrid) == 0) {
+								log.debug("Rid " + rid + " exists in " + table + "." + colname);
 							}
 						}
 					}
 				}
-			}
-			catch (SQLException ex){
+			} catch (SQLException ex) {
 				log.error(str_sql);
 				log.error(ex.getMessage());
 			}
-			not_first_pass=false;
+			not_first_pass = false;
 		}
 	}
-	
-	
+
+
 	/* (non-Javadoc)
 	 * @see loaniq.analysis.IAnalyzer#build_sql()
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
-	public void build_sql(){
+	public Vector<String> build_sql(){
 		//Params param = Params.getParams();
 		String table;
 		String str_sql = new String("");
@@ -137,9 +134,10 @@ public class ridanalyzer implements IAnalyzer {
 			str_sql = "SELECT ";
 			//get the associated cols
 			//log.debug("columns.get("+table+")");
-			ArrayList<String> alcol = (ArrayList<String>) (columns.get(table));
+			Collection alcol = columns.get(table);
 			//log.debug("table-->"+alcol.toString());
 			Iterator<String> col_itr = alcol.iterator();
+			
 			while (col_itr.hasNext()){
 				colname = (String)col_itr.next();
 				if (not_first_pass){
@@ -153,6 +151,7 @@ public class ridanalyzer implements IAnalyzer {
 			sql.add(str_sql);
 			not_first_pass=false;
 		}
+		return sql;
 	}
 	
 	/**
@@ -253,13 +252,31 @@ public class ridanalyzer implements IAnalyzer {
 		String name = null;
 		String sql = new String(
 				/*"select VIEW_NAME from all_views where OWNER = '"+param.get_schema()+"'" */
-				"select table_name from INFORMATION_SCHEMA.views where table_catalog = '"+param.get_schema()+"'" 
+				//"select table_name from INFORMATION_SCHEMA.views where table_catalog = '"+param.get_schema()+"'" 
+				"SELECT n.nspname as Schema,"+
+				 " c.relname as VIEW_NAME, "+
+				 " CASE c.relkind WHEN 'r' THEN 'table' "
+				 + "WHEN 'v' THEN 'view' "
+				 + "WHEN 'm' THEN 'materialized view' "
+				 + "WHEN 'i' THEN 'index' "
+				 + "WHEN 'S' THEN 'sequence' "
+				 + "WHEN 's' THEN 'special' "
+				 + "WHEN 'f' THEN 'foreign table' "
+				 + "END as Type,"+
+				 " pg_catalog.pg_get_userbyid(c.relowner) as Owner"
+				+" FROM pg_catalog.pg_class c"
+				 +"    LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace"
+				+" WHERE c.relkind IN ('v','')"
+				 +"     AND n.nspname <> 'pg_catalog'"
+				  +"    AND n.nspname <> 'information_schema'"
+				 +"     AND n.nspname !~ '^pg_toast'"
+				 +" AND pg_catalog.pg_table_is_visible(c.oid)"
 				);
 		log.debug(sql);
 		try {
 		ResultSet rs = param.db_conn.getStatement().executeQuery(sql);
 			while (rs.next()){
-				name = rs.getString("table_name");
+				name = rs.getString("VIEW_NAME");
 				tables.add(name);
 			}
 		}

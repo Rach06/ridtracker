@@ -10,7 +10,7 @@ import com.google.inject.Injector;
 
 import loaniq.analysis.IAnalyzer;
 import loaniq.analysis.Params;
-import loaniq.analysis.ridanalyzer;
+import loaniq.analysis.dummy.RidAnalyzerDummy;
 import loaniq.utils.InjectLogger;
 import loaniq.utils.RidTrackerModule;
 
@@ -29,7 +29,8 @@ public class ridtracker {
 		//Logger log = injector.getInstance(Logger.class);
 		ridtracker app = injector.getInstance(ridtracker.class);
 		Params params = injector.getInstance( Params.class );
-		IAnalyzer ra = injector.getInstance( ridanalyzer.class );
+		//IAnalyzer ra = injector.getInstance( ridanalyzer.class );
+		IAnalyzer ra = injector.getInstance( RidAnalyzerDummy.class );
 		app.run(args, params, ra);
 
 	}
