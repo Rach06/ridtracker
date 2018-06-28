@@ -1,5 +1,7 @@
 package loaniq.main;
 
+import java.io.File;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
@@ -10,6 +12,7 @@ import com.google.inject.Injector;
 
 import loaniq.analysis.IAnalyzer;
 import loaniq.analysis.Params;
+import loaniq.analysis.RidAnalyzer;
 import loaniq.analysis.dummy.RidAnalyzerDummy;
 import loaniq.utils.InjectLogger;
 import loaniq.utils.RidTrackerModule;
@@ -29,15 +32,16 @@ public class ridtracker {
 		//Logger log = injector.getInstance(Logger.class);
 		ridtracker app = injector.getInstance(ridtracker.class);
 		Params params = injector.getInstance( Params.class );
-		//IAnalyzer ra = injector.getInstance( ridanalyzer.class );
-		IAnalyzer ra = injector.getInstance( RidAnalyzerDummy.class );
+		IAnalyzer ra = injector.getInstance( RidAnalyzer.class );
+		//          ra = injector.getInstance( RidAnalyzerDummy.class );
 		app.run(args, params, ra);
 
 	}
 
 	private void run(String[] args, Params params, IAnalyzer ra) {
-		if (args.length  != 2 ){
-			log.error("Usage: ridtracker <rid> <schema>");	
+		if (args.length  != 3 ){
+
+			log.error("Usage: ridtracker <rid> <schema> <out file>");	
 			return;
 		}
 		if ( args[0].length() != 8){
@@ -46,6 +50,7 @@ public class ridtracker {
 		else {
 			String rid = args[0];
 			params.set_schema(args[1]);
+			params.setFile( args[2]);
 
 			LocalDateTime startPoint = LocalDateTime.now();   // The current date and time	
 			
@@ -54,9 +59,9 @@ public class ridtracker {
 			
 			LocalDateTime endPoint = LocalDateTime.now();     // The current date and time
 
-			Duration timeToExecute = Duration.between(endPoint, startPoint);
+			Duration timeToExecute = Duration.between(startPoint, endPoint );
 			log.info("Execution took "+timeToExecute.getSeconds()+ " seconds");
-			log.info("finished...");
+			log.info("finished...see file "+params.getFileName());
 		}
 	}
 

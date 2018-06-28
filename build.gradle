@@ -19,7 +19,7 @@ repositories {
 
 repositories {
    flatDir {
-       dirs '/home/lochlann/dev/libs2'
+       dirs 'libs'
    }
 }
 
@@ -31,11 +31,14 @@ dependencies {
 
     // The production code uses the SLF4J logging API at compile time
     compile 'org.slf4j:slf4j-api:1.7.21'
+    
+    
     compile group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.6.2'
     compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.6.2'
     
-    compile group: 'org.apache.commons', name:'commons-collections4', version: '4.1'
+    compile 'com.google.guava:guava:25.1-jre'
     compile group: 'org.apache.logging.log4j', name:'log4j', version:'2.6.2'
+    
 
    
     // DI
@@ -46,7 +49,7 @@ dependencies {
     compile 'com.google.gwt.inject:gin:2.0.0'
     
     //Local JDBC driver
-    compile files('postgresql-9.4.1211.jar')
+    compile files('postgresql-9.4.1211.jar','ojdbc6.jar')
 
     // Declare the dependency for your favourite test framework you want to use in your tests.
     // TestNG is also supported by the Gradle Test task. Just change the

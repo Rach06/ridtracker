@@ -18,7 +18,7 @@ import com.google.inject.Provider;
 
 import loaniq.utils.InjectLogger;
 
-public class ridanalyzer implements IAnalyzer {
+public class RidAnalyzer implements IAnalyzer {
 	
 	private final Provider<DBConnect> db_connProvider;
 	
@@ -34,7 +34,7 @@ public class ridanalyzer implements IAnalyzer {
 	 * 
 	 */
 	@Inject
-	public ridanalyzer(Provider<DBConnect> dbConnection) {
+	public RidAnalyzer(Provider<DBConnect> dbConnection) {
 		this.db_connProvider = dbConnection;
 		tables = new Vector<String>();
 		columns = new ArrayListValuedHashMap<String,String>();
@@ -60,6 +60,8 @@ public class ridanalyzer implements IAnalyzer {
 		if (rid.compareTo("")==0){
 			return;
 		}
+		
+		ArrayList<String> lines = new ArrayList<String>();
 		
 		build_sql();
 		
@@ -101,11 +103,17 @@ public class ridanalyzer implements IAnalyzer {
 						String dbrid = rs.getString(colname);
 						if (dbrid != null) {
 							if (rid.compareTo(dbrid) == 0) {
-								log.debug("Rid " + rid + " exists in " + table + "." + colname);
+								String line = "Rid " + rid + " exists in " + table + "." + colname+"\n";
+								log.debug(line);
+								//TODO: enhance this to runnable SQL.
+								lines.add(line);
 							}
 						}
 					}
 				}
+				//output per result set
+				param.writeToFile(lines);
+				lines.clear();
 			} catch (SQLException ex) {
 				log.error(str_sql);
 				log.error(ex.getMessage());
@@ -251,9 +259,9 @@ public class ridanalyzer implements IAnalyzer {
 		log.debug("populate_table()");
 		String name = null;
 		String sql = new String(
-				/*"select VIEW_NAME from all_views where OWNER = '"+param.get_schema()+"'" */
+				"select VIEW_NAME from all_views where OWNER = '"+param.get_schema()+"'" 
 				//"select table_name from INFORMATION_SCHEMA.views where table_catalog = '"+param.get_schema()+"'" 
-				"SELECT n.nspname as Schema,"+
+				/*"SELECT n.nspname as Schema,"+
 				 " c.relname as VIEW_NAME, "+
 				 " CASE c.relkind WHEN 'r' THEN 'table' "
 				 + "WHEN 'v' THEN 'view' "
@@ -268,10 +276,11 @@ public class ridanalyzer implements IAnalyzer {
 				 +"    LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace"
 				+" WHERE c.relkind IN ('v','')"
 				 +"     AND n.nspname <> 'pg_catalog'"
-				  +"    AND n.nspname <> 'information_schema'"
+				 +"    AND n.nspname <> 'information_schema'"
 				 +"     AND n.nspname !~ '^pg_toast'"
-				 +" AND pg_catalog.pg_table_is_visible(c.oid)"
+				 +" AND pg_catalog.pg_table_is_visible(c.oid)"*/
 				);
+				
 		log.debug(sql);
 		try {
 		ResultSet rs = param.db_conn.getStatement().executeQuery(sql);
@@ -289,6 +298,7 @@ public class ridanalyzer implements IAnalyzer {
 	/**
 	 * debug function print all views
 	 */
+	//TODO: lamda expression this
 	public void print_tables(){
 		//IParameters param = Params.getParams();
 		Iterator<String> itr = tables.iterator();
@@ -299,6 +309,7 @@ public class ridanalyzer implements IAnalyzer {
 			log.debug(tables.size()+" Tables in system");
 	}
 	
+	//TODO: lamda expression this
 	public void print_cols(){
 		//IParameters param = Params.getParams();
 		Iterator<String> itr = columns.values().iterator();
@@ -314,6 +325,7 @@ public class ridanalyzer implements IAnalyzer {
 		print_cols();
 	}
 	
+	//TODO: lamda expression this
 	public void print_sql(){
 		//IParameters param = Params.getParams();
 		Iterator<String> itr = sql.iterator();

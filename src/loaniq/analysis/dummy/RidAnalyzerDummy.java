@@ -11,10 +11,10 @@ import com.google.inject.Provider;
 
 import loaniq.analysis.DBConnect;
 import loaniq.analysis.IAnalyzer;
-import loaniq.analysis.ridanalyzer;
+import loaniq.analysis.RidAnalyzer;
 import loaniq.utils.InjectLogger;
 
-public class RidAnalyzerDummy extends ridanalyzer implements IAnalyzer {
+public class RidAnalyzerDummy extends RidAnalyzer implements IAnalyzer {
 	
 	@InjectLogger Logger log;
 
